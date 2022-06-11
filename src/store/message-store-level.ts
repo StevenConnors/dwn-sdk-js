@@ -11,6 +11,8 @@ import searchIndex from 'search-index';
 import type { Message } from '../message';
 import type { MessageStore } from './message-store';
 
+const PERMISSIONS_REQUEST = 'PermissionsRequest';
+
 /**
  * A simple implementation of {@link MessageStore} that works in both the browser and server-side.
  * Leverages LevelDB under the hood.
@@ -109,13 +111,16 @@ export class MessageStoreLevel implements MessageStore {
 
     const indexDocument: any = { _id: encodedBlock.cid.toString(), method, objectId };
 
-    // TODO: clean this up and likely move it elsewhere (e.g. a different function) so that it can be used elsewhere
-    if (descriptor.method === 'PermissionsRequest') {
+    MessageStoreLevel.addMessage(indexDocument, descriptor)
+    await this.index.PUT([indexDocument]);
+  }
+
+  private static addMessage(indexDocument: any, descriptor: any): any {
+    if (descriptor.method === PERMISSIONS_REQUEST) {
       indexDocument.ability = descriptor.ability;
       indexDocument.requester = descriptor.requester;
     }
-
-    await this.index.PUT([indexDocument]);
+    return indexDocument;
   }
 
   /**
